@@ -22,7 +22,7 @@ use actix_web::http::Method;
 use actix_web::web::Bytes;
 use actix_web::{HttpMessage, HttpResponse};
 use base64::Engine;
-use core::fmt::{self, Write};
+use core::fmt::{Write};
 use futures::{
     future::{ok, Ready},
     Future,
@@ -98,7 +98,7 @@ where
         Box::pin(async move {
             let res: ServiceResponse<B> = fut.await?;
             match method {
-                Method::GET => {
+                Method::GET | Method::POST => {
                     let mut modified = true;
                     let mut payload: Option<Bytes> = None;
                     let mut res = res.map_body(|_h, body| match body.size() {
@@ -299,7 +299,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn does_not_add_etag_header_to_post_request() {
+    async fn does_not_add_etag_header_to_put_request() {
         let mut app = init_service(
             App::new()
                 .wrap(Etag::default())
@@ -307,7 +307,7 @@ mod tests {
         )
         .await;
 
-        let req = TestRequest::default().method(Method::POST).to_request();
+        let req = TestRequest::default().method(Method::PUT).to_request();
         let res = call_service(&mut app, req).await;
 
         assert_eq!(res.headers().get(ETag::name()), None)
